@@ -1704,11 +1704,7 @@ static ssize_t procDisconnInfoRead(struct file *filp,
 
 		prDisconn = g_prDisconnInfo + temp_idx;
 
-#if KERNEL_VERSION(5, 0, 0) <= LINUX_VERSION_CODE
-		time64_to_tm(prDisconn->tv.tv_sec, 0, &broken);
-#else
 		time_to_tm(prDisconn->tv.tv_sec, 0, &broken);
-#endif
 		kalScnprintf(date,
 			sizeof(date),
 			"%02d-%02d %02d:%02d:%02d.%ld",
@@ -1717,12 +1713,7 @@ static ssize_t procDisconnInfoRead(struct file *filp,
 			broken.tm_hour,
 			broken.tm_min,
 			broken.tm_sec,
-#if KERNEL_VERSION(5, 0, 0) <= LINUX_VERSION_CODE
-			(prDisconn->tv.tv_nsec/USEC_PER_MSEC)
-#else
-			prDisconn->tv.tv_usec
-#endif
-			);
+			prDisconn->tv.tv_usec);
 
 		i4Count += kalScnprintf(temp + i4Count,
 				sizeof(g_aucProcBuf) - i4Count,
@@ -1759,7 +1750,7 @@ static ssize_t procDisconnInfoRead(struct file *filp,
 		if (prDisconn->u2DisassocSeqNum != 0xFFFF) {
 			i4Count += kalScnprintf(temp + i4Count,
 					sizeof(g_aucProcBuf) - i4Count,
-					"%-26s%s%d\n",
+					"%-26s%s%ld\n",
 					"Disassociation SeqNum",
 					" = ",
 					prDisconn->u2DisassocSeqNum);

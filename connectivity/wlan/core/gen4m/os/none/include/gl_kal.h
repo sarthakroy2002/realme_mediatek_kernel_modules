@@ -120,8 +120,7 @@ extern int g_u4WlanInitFlag;
 	(GLUE_FLAG_HALT | GLUE_FLAG_INT | GLUE_FLAG_HIF_TX | \
 	GLUE_FLAG_HIF_TX_CMD | GLUE_FLAG_HIF_FW_OWN | \
 	GLUE_FLAG_HIF_PRT_HIF_DBG_INFO | \
-	GLUE_FLAG_UPDATE_WMM_QUOTA | \
-	GLUE_FLAG_NOTIFY_MD_CRASH)
+	GLUE_FLAG_UPDATE_WMM_QUOTA)
 
 #define GLUE_FLAG_RX_PROCESS (GLUE_FLAG_HALT | GLUE_FLAG_RX_TO_OS)
 #else
@@ -1457,9 +1456,6 @@ void kalTimeoutHandler(unsigned long arg);
 #define kalSetWmmUpdateEvent(_pr) \
 	KAL_NEED_IMPLEMENT(__FILE__, __func__, __LINE__, _pr)
 
-#define kalSetMdCrashEvent(_pr) \
-	KAL_NEED_IMPLEMENT(__FILE__, __func__, __LINE__, _pr)
-
 #define kalSetHifDbgEvent(_pr) \
 	KAL_NEED_IMPLEMENT(__FILE__, __func__, __LINE__, _pr)
 #else
@@ -1470,8 +1466,6 @@ void kalSetEvent(struct GLUE_INFO *pr);
 void kalSetIntEvent(struct GLUE_INFO *pr);
 
 void kalSetWmmUpdateEvent(struct GLUE_INFO *pr);
-
-void kalSetMdCrashEvent(struct GLUE_INFO *pr);
 
 void kalSetHifDbgEvent(struct GLUE_INFO *pr);
 #endif

@@ -340,11 +340,7 @@ int core_plf_init(void)
 #endif
 
 #ifdef MET_EMI
-#if defined(CONFIG_MTK_TINYSYS_SSPM_SUPPORT)
-#if defined(ONDIEMET_SUPPORT) || defined(TINYSYS_SSPM_SUPPORT)
 	met_register(&met_sspm_emi);
-#endif
-#endif
 #endif
 
 #ifdef MET_SMI
@@ -403,11 +399,7 @@ void core_plf_exit(void)
 #endif
 
 #ifdef MET_EMI
-#if defined(CONFIG_MTK_TINYSYS_SSPM_SUPPORT)
-#if defined(ONDIEMET_SUPPORT) || defined(TINYSYS_SSPM_SUPPORT)
 	met_deregister(&met_sspm_emi);
-#endif
-#endif
 #endif
 
 #ifdef MET_SMI

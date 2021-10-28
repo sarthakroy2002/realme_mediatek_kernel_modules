@@ -906,7 +906,6 @@ BOOLEAN wlanSubModExit(P_GLUE_INFO_T prGlueInfo)
 	return TRUE;
 }
 
-#if 0
 /*----------------------------------------------------------------------------*/
 /*!
 * \brief set by sub module, indicate sub module is already inserted
@@ -926,6 +925,7 @@ wlanSubModRegisterInitExit(SUB_MODULE_INIT rSubModInit, SUB_MODULE_EXIT rSubModE
 	rSubModHandler[eSubModIdx].fgIsInited = FALSE;
 }
 
+#if 0
 /*----------------------------------------------------------------------------*/
 /*!
 * \brief check wlan is launched or not
@@ -1403,7 +1403,7 @@ static void wlanSetMulticastListWorkQueue(struct work_struct *work)
 		netif_addr_lock_bh(prDev);
 
 		netdev_for_each_mc_addr(ha, prDev) {
-			if (i < MAX_NUM_GROUP_ADDR) {
+			if ((i < MAX_NUM_GROUP_ADDR) && (ha != NULL)) {
 				memcpy((prMCAddrList + i * ETH_ALEN), ha->addr, ETH_ALEN);
 				i++;
 			}

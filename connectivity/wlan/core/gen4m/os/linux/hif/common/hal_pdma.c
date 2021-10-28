@@ -2413,7 +2413,7 @@ bool halWpdmaWriteMsdu(struct GLUE_INFO *prGlueInfo,
 		list_del(prCurList);
 		prHifInfo->u4TxDataQLen--;
 	}
-	if (prMsduInfo && prMsduInfo->pfHifTxMsduDoneCb)
+	if (prMsduInfo->pfHifTxMsduDoneCb)
 		prMsduInfo->pfHifTxMsduDoneCb(prGlueInfo->prAdapter,
 				prMsduInfo);
 	halWpdamFreeMsdu(prGlueInfo, prMsduInfo, true);
@@ -2513,7 +2513,7 @@ bool halWpdmaWriteAmsdu(struct GLUE_INFO *prGlueInfo,
 
 		list_del(prCur);
 		prHifInfo->u4TxDataQLen--;
-		if (prMsduInfo && prMsduInfo->pfHifTxMsduDoneCb)
+		if (prMsduInfo->pfHifTxMsduDoneCb)
 			prMsduInfo->pfHifTxMsduDoneCb(prGlueInfo->prAdapter,
 					prMsduInfo);
 		halWpdamFreeMsdu(prGlueInfo, prMsduInfo, true);
@@ -3072,14 +3072,4 @@ void halDisableSlpProt(struct GLUE_INFO *prGlueInfo)
 	kalDevRegWrite(prGlueInfo, CONN_HIF_PDMA_CSR_PDMA_SLP_PROT_ADDR, u4Val);
 }
 
-void halNotifyMdCrash(IN struct ADAPTER *prAdapter)
-{
-	if (!prAdapter) {
-		DBGLOG(HAL, ERROR, "Null prAdapter.\n");
-		return;
-	}
-	DBGLOG(HAL, INFO, "halNotifyMdCrash.\n");
-	kalDevRegWrite(prAdapter->prGlueInfo, HOST2MCU_SW_INT_SET,
-			MCU_INT_NOTIFY_MD_CRASH);
-}
 

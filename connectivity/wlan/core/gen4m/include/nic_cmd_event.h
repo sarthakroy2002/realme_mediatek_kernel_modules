@@ -2467,12 +2467,8 @@ struct CMD_SCHED_SCAN_REQ {
 	uint8_t ucScnFuncMask;
 	struct CHANNEL_INFO aucChannel[64];
 	uint16_t au2MspList[10];
-	uint8_t ucBssIndex;
-	uint32_t u4DelayStartInSec;
-	uint32_t u4FastScanIteration;
-	uint32_t u4FastScanPeriod;
-	uint32_t u4SlowScanPeriod;
-	uint8_t aucPadding_3[47];
+	uint8_t aucPadding_3[64];
+
 	/* keep last */
 	uint8_t aucIE[0];             /* MUST be the last for IE content */
 };
@@ -2903,22 +2899,6 @@ struct EXT_EVENT_TXPOWER_ALL_RATE_POWER_INFO_T {
 	int8_t icPwrMaxBnd;
 	int8_t icPwrMinBnd;
 	uint8_t ucReserved2;
-};
-#endif
-
-#if CFG_MODIFY_TX_POWER_BY_BAT_VOLT
-struct CMD_TX_POWER_PERCENTAGE_CTRL_T {
-	uint8_t ucPowerCtrlFormatId;
-	bool  fgPercentageEnable;
-	uint8_t ucBandIdx;
-	uint8_t ucReserved;
-};
-
-struct CMD_TX_POWER_PERCENTAGE_DROP_CTRL_T {
-	uint8_t ucPowerCtrlFormatId;
-	uint8_t i1PowerDropLevel;
-	uint8_t ucBandIdx;
-	uint8_t ucReserved;
 };
 #endif
 

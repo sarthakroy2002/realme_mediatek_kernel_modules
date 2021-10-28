@@ -3151,9 +3151,6 @@ wlanoidSetRemoveKey(IN struct ADAPTER *prAdapter,
 			}
 			ASSERT(prBssInfo->wepkeyWlanIdx < WTBL_SIZE);
 			ucRemoveBCKeyAtIdx = prBssInfo->wepkeyWlanIdx;
-			secPrivacyFreeForEntry(prAdapter,
-					prBssInfo->wepkeyWlanIdx);
-			prBssInfo->wepkeyWlanIdx = WTBL_RESERVED_ENTRY;
 		} else {
 			DBGLOG(RSN, INFO, "Remove group key id = %d",
 			       u4KeyIndex);
@@ -3170,13 +3167,6 @@ wlanoidSetRemoveKey(IN struct ADAPTER *prAdapter,
 						u4KeyIndex] < WTBL_SIZE);
 				ucRemoveBCKeyAtIdx =
 					prBssInfo->ucBMCWlanIndexS[u4KeyIndex];
-
-				secPrivacyFreeForEntry(prAdapter,
-				    prBssInfo->ucBMCWlanIndexS[u4KeyIndex]);
-				prBssInfo->ucBMCWlanIndexSUsed[u4KeyIndex]
-					= FALSE;
-				prBssInfo->ucBMCWlanIndexS[u4KeyIndex]
-					= WTBL_RESERVED_ENTRY;
 			}
 		}
 
@@ -16366,7 +16356,6 @@ uint32_t wlanoidTxPowerControl(IN struct ADAPTER *prAdapter,
 					MAX_TX_PWR_CTRL_ELEMENT_NAME_SIZE);
 				newElement->index = oldElement->index;
 				newElement->eCtrlType = oldElement->eCtrlType;
-				newElement->u2CountryCode =oldElement->u2CountryCode;
 				txPwrCtrlDeleteElement(prAdapter,
 				       newElement->name, newElement->index,
 				       PWR_CTRL_TYPE_DYNAMIC_LIST);

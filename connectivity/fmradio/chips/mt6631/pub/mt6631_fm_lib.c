@@ -77,6 +77,7 @@ static signed int mt6631_I2s_Setting(signed int onoff, signed int mode, signed i
 #endif
 static unsigned short mt6631_chan_para_get(unsigned short freq);
 static signed int mt6631_desense_check(unsigned short freq, signed int rssi);
+static signed int mt6631_set_desense_list(int opid,unsigned short freq);
 static bool mt6631_TDD_chan_check(unsigned short freq);
 static bool mt6631_SPI_hopping_check(unsigned short freq);
 static signed int mt6631_soft_mute_tune(unsigned short freq, signed int *rssi, signed int *valid);
@@ -271,6 +272,82 @@ static unsigned short mt6631_get_chipid(void)
 	return 0x6631;
 }
 
+/*HQ-wangzhengyuan modify for HQ-66902  20.04.06 begin*/
+static signed int mt6631_switch_clk_64m(void)
+{
+	unsigned int val = 0;
+	int i = 0, ret = 0;
+
+	/* switch SPI clock to 64MHz */
+	ret = fm_host_reg_read(0x81026004, &val);
+	/* Set 0x81026004[0] = 0x1 */
+	ret = fm_host_reg_write(0x81026004, val | 0x1);
+	if (ret) {
+		WCN_DBG(FM_ALT | CHIP,
+			"RampDown Switch SPI clock to 64MHz failed\n");
+		return -1;
+	}
+
+	for (i = 0; i < 100; i++) {
+		fm_host_reg_read(0x81026004, &val);
+		if ((val & 0x18) == 0x10)
+			break;
+		fm_delayus(10);
+	}
+
+	if (i == 100) {
+		WCN_DBG(FM_ERR | CHIP,
+			"switch_SPI_clock_to_64MHz polling timeout\n");
+		return -1;
+	}
+
+	/* Capture next (with SPI Clock: 64MHz) */
+	fm_host_reg_read(0x81026004, &val);
+	/* Set 0x81026004[2] = 0x1 */
+	fm_host_reg_write(0x81026004, val | 0x4);
+
+	return 0;
+}
+/*HQ-wangzhengyuan modify for HQ-66902  20.04.06 end*/
+
+/*HQ-wangzhengyuan modify for HQ-66902  20.04.06 begin*/
+static signed int mt6631_switch_clk_26m(void)
+{
+	unsigned int val = 0;
+	int i = 0, ret = 0;
+
+	/* Capture next (with SPI Clock: 26MHz) */
+	fm_host_reg_read(0x81026004, &val);
+	/* Set 0x81026004[2] = 0x0 */
+	fm_host_reg_write(0x81026004, val & 0xFFFFFFFB);
+
+	/* switch SPI clock to 26MHz */
+	ret = fm_host_reg_read(0x81026004, &val);
+	/* Set 0x81026004[0] = 0x0 */
+	ret = fm_host_reg_write(0x81026004, val & 0xFFFFFFFE);
+	if (ret) {
+		WCN_DBG(FM_ALT | CHIP,
+			"RampDown Switch SPI clock to 26MHz failed\n");
+		return -1;
+	}
+
+	for (i = 0; i < 100; i++) {
+		fm_host_reg_read(0x81026004, &val);
+		if ((val & 0x18) == 0x8)
+			break;
+		fm_delayus(10);
+	}
+
+	if (i == 100) {
+		WCN_DBG(FM_ERR | CHIP,
+			"switch_SPI_clock_to_26MHz polling timeout\n");
+		return -1;
+	}
+
+	return 0;
+}
+/*HQ-wangzhengyuan modify for HQ-66902  20.04.06 end*/
+
 /*  MT6631_SetAntennaType - set Antenna type
  *  @type - 1, Short Antenna;  0, Long Antenna
  */
@@ -281,11 +358,14 @@ static signed int mt6631_SetAntennaType(signed int type)
 	WCN_DBG(FM_DBG | CHIP, "set ana to %s\n", type ? "short" : "long");
 	fm_reg_read(FM_MAIN_CG2_CTRL, &dataRead);
 
-	if (type)
+	if (type) {
+		fm_lan_enable();
 		dataRead |= ANTENNA_TYPE;
-	else
+	
+	} else {
+		fm_lan_disable();
 		dataRead &= (~ANTENNA_TYPE);
-
+	}
 	fm_reg_write(FM_MAIN_CG2_CTRL, dataRead);
 
 	return 0;
@@ -1432,28 +1512,6 @@ static bool mt6631_SetFreq(unsigned short freq)
 	*/
 	fm_reg_write(0xE0, 0x0806);
 #endif
-#ifdef OPLUS_BUG_COMPATIBILITY
-		/* Yongpei.Yao@MULTIMEDIA.AUDIODRIVER.HAL, 2018/12/06, Modify for FM rssi_th. */
-		/* mtk solution ID: FAQ06249 to solve FM Stereo separation
-		 * threshold = -((RSSI(dBuV)-107)*4*16/6 + 384)
-		 * eg: RSSI=33dBuV, threshold=-((33-107)*4*16/6 + 384)= 405 = 0x195 -> rssi_th
-		 * but maybe some deviation with reality, need to test
-		 */
-		fm_delayms(1);
-		fm_reg_write(0xE2, 0x3154);
-		/* Yongpei.Yao@MULTIMEDIA.AUDIODRIVER.MACHINE, 2018/12/06, Modify for fm */
-		fm_reg_write(0xE3, 0x0195); //rssi=33
-		fm_reg_write(0xE1, 0x0002);
-		fm_delayms(1);
-		fm_reg_write(0xE2, 0x3157);
-		fm_reg_write(0xE3, 0); //pamd_step
-		fm_reg_write(0xE1, 0x0002);
-		fm_delayms(1);
-		fm_reg_write(0xE2,	0x3155);
-		fm_reg_write(0xE3, 0); //pamd_th
-		fm_reg_write(0xE1, 0x0002);
-#endif /* OPLUS_BUG_COMPATIBILITY */
-
 	return true;
 }
 
@@ -2043,6 +2101,7 @@ signed int mt6631_fm_low_ops_register(struct fm_callback *cb, struct fm_basic_in
 	bi->is_dese_chan = mt6631_is_dese_chan;
 	bi->softmute_tune = mt6631_soft_mute_tune;
 	bi->desense_check = mt6631_desense_check;
+	bi->set_desense_list = mt6631_set_desense_list;
 	bi->cqi_log = mt6631_full_cqi_get;
 	bi->pre_search = mt6631_pre_search;
 	bi->restore_search = mt6631_restore_search;
@@ -2142,9 +2201,16 @@ static const signed char mt6631_chan_para_map[] = {
 	0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 1, 0, 0, 0, 0, 0, 0, 0,	/* 10700~10795 */
 	0			/* 10800 */
 };
-static const unsigned short mt6631_scan_dese_list[] = {
+
+#if defined(TARGET_PRODUCT_SHIVA) || defined(TARGET_PRODUCT_LANCELOT)
+static unsigned short mt6631_scan_dese_list[] = {
+	6910, 6920, 7680, 7800, 8450, 9100, 9200, 9210, 9220, 9230, 9270, 9520, 9570, 9580, 9590, 9600, 9620, 9790, 9820, 9830, 9870, 9900, 9980, 9990, 10190, 10200, 10340, 10350, 10400, 10410, 10420, 10430, 10480, 10490, 10710, 10750, 10760, 10770, 10780
+};
+#else
+static unsigned short mt6631_scan_dese_list[] = {
 	6910, 6920, 7680, 7800, 8450, 9210, 9220, 9230, 9590, 9600, 9830, 9900, 9980, 9990, 10400, 10750, 10760
 };
+#endif
 
 static const unsigned short mt6631_SPI_hopping_list[] = {
 	6510, 6520, 6530, 7780, 7790, 7800, 7810, 7820, 9090, 9100, 9110, 9120, 10380, 10390, 10400, 10410, 10420
@@ -2241,6 +2307,31 @@ static signed int mt6631_desense_check(unsigned short freq, signed int rssi)
 		WCN_DBG(FM_DBG | CHIP, "desen_rssi %d th:%d\n", rssi, fm_config.rx_cfg.desene_rssi_th);
 	}
 	return 0;
+}
+
+static signed int mt6631_set_desense_list(int opid, unsigned short freq)
+{
+    signed int size;
+    size = ARRAY_SIZE(mt6631_scan_dese_list);
+    WCN_DBG(FM_NTC | CHIP, "set desense list opid %d\n", opid);
+    switch(opid) {
+        case ADD_DESENSE_CHANNEL:
+        {
+            while (size) {
+            if (mt6631_scan_dese_list[size - 1] == freq)
+                mt6631_scan_dese_list[size-1] = 0;
+                WCN_DBG(FM_NTC| CHIP, "remove desense channel %d \n", freq);
+                return 1;
+                size--;
+            }
+            break;
+        }
+        case REMOVE_DESENSE_CHANNEL:
+            break;
+        default:
+            return 0;
+    }
+    return 0;
 }
 
 static bool mt6631_TDD_chan_check(unsigned short freq)

@@ -350,7 +350,7 @@ static int hifAxiClrBusCnt(void)
 static int hifAxiSetMpuProtect(bool enable)
 {
 #if CFG_MTK_ANDROID_EMI
-	kalSetEmiMpuProtection(gConEmiPhyBaseFinal, enable);
+	kalSetEmiMpuProtection(gConEmiPhyBase, enable);
 #endif
 	return 0;
 }

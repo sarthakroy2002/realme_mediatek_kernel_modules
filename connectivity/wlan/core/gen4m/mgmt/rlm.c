@@ -4908,17 +4908,10 @@ void rlmProcessSpecMgtAction(struct ADAPTER *prAdapter, struct SW_RFB *prSwRfb)
 		DBGLOG(RLM, INFO, "[Mgt Action] Measure Request\n");
 		prMeasurementReqIE = SM_MEASUREMENT_REQ_IE(pucIE);
 		if (prMeasurementReqIE->ucId == ELEM_ID_MEASUREMENT_REQ) {
-			/* Check IE length is valid */
-			if (prMeasurementReqIE->ucLength != 0 &&
-				(prMeasurementReqIE->ucLength >=
-				sizeof(struct IE_MEASUREMENT_REQ) - 2)) {
-				prStaRec->ucSmMsmtRequestMode =
-					prMeasurementReqIE->ucRequestMode;
-				prStaRec->ucSmMsmtToken =
-					prMeasurementReqIE->ucToken;
-				msmtComposeReportFrame(prAdapter, prStaRec,
-							NULL);
-			}
+			prStaRec->ucSmMsmtRequestMode =
+				prMeasurementReqIE->ucRequestMode;
+			prStaRec->ucSmMsmtToken = prMeasurementReqIE->ucToken;
+			msmtComposeReportFrame(prAdapter, prStaRec, NULL);
 		}
 
 		break;
@@ -6020,9 +6013,10 @@ static void rlmCompleteOpModeChange(struct ADAPTER *prAdapter,
 	}
 
 	DBGLOG(RLM, INFO,
-		"Complete BSS[%d] OP Mode change to BW[%d] RxNss[%d] TxNss[%d]",
+		"Complete BSS[%d] OP Mode change to BW[%d] ",
 		prBssInfo->ucBssIndex,
-		rlmGetBssOpBwByVhtAndHtOpInfo(prBssInfo),
+		rlmGetBssOpBwByVhtAndHtOpInfo(prBssInfo));
+	DBGLOG(RLM, INFO, "RxNss[%d] TxNss[%d]\n",
 		prBssInfo->ucOpRxNss,
 		prBssInfo->ucOpTxNss);
 
@@ -6094,18 +6088,15 @@ rlmChangeOperationMode(
 	/* <3>Check if the current operating BW/Nss is the same as the target
 	 * one
 	 */
-	if (ucChannelWidth == rlmGetBssOpBwByVhtAndHtOpInfo(prBssInfo)) {
+	if (ucChannelWidth == rlmGetBssOpBwByVhtAndHtOpInfo(prBssInfo))
 		fgIsChangeBw = FALSE;
-		prBssInfo->fgIsOpChangeChannelWidth = FALSE;
-	}
-	if (ucOpRxNss == prBssInfo->ucOpRxNss) {
+
+	if (ucOpRxNss == prBssInfo->ucOpRxNss)
 		fgIsChangeRxNss = FALSE;
-		prBssInfo->fgIsOpChangeRxNss = FALSE;
-	}
-	if (ucOpTxNss == prBssInfo->ucOpTxNss) {
+
+	if (ucOpTxNss == prBssInfo->ucOpTxNss)
 		fgIsChangeTxNss = FALSE;
-		prBssInfo->fgIsOpChangeTxNss = FALSE;
-	}
+
 	if ((!fgIsChangeBw) && (!fgIsChangeRxNss) && (!fgIsChangeTxNss)) {
 		DBGLOG(RLM, INFO,
 			"BSS[%d] target OpMode BW[%d] RxNss[%d] TxNss[%d] No change, return\n",
@@ -6154,7 +6145,8 @@ rlmChangeOperationMode(
 		}
 
 #if CFG_SUPPORT_SMART_GEAR
-		if (eNewReq != 0x04 /* CNM_OPMODE_REQ_SMARTGEAR_1T2R */) {
+		/*CNM_OPMODE_REQ_SMARTGEAR_1T2R*/
+		if (eNewReq != 0x04) {
 #endif		/* <5.2> Send operating mode notification frame (STA mode)
 		 * No action frame is needed if we only changed OpTxNss.
 		 */
@@ -6213,9 +6205,6 @@ rlmChangeOperationMode(
 
 		/* <5.3> Change OP Info w/o waiting for notification Tx done */
 		if (prBssInfo->pfOpChangeHandler == NULL ||
-#if CFG_SUPPORT_SMART_GEAR
-			eNewReq == 0x04 /* CNM_OPMODE_REQ_SMARTGEAR_1T2R */ ||
-#endif
 			(!fgIsChangeBw && !fgIsChangeRxNss)) {
 			rlmCompleteOpModeChange(prAdapter, prBssInfo, TRUE);
 			/* No callback */

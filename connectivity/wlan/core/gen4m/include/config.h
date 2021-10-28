@@ -541,7 +541,6 @@
 
 /* debug which packet wake up host */
 #define CFG_SUPPORT_WAKEUP_REASON_DEBUG         1
-#define CFG_MODIFY_TX_POWER_BY_BAT_VOLT         1
 
 #define CFG_INIT_POWER_SAVE_PROF		ENUM_PSP_FAST_SWITCH
 
@@ -739,11 +738,7 @@
 #define CFG_SUPPORT_HOTSPOT_OPTIMIZATION        0
 #define CFG_HOTSPOT_OPTIMIZATION_BEACON_INTERVAL 300
 #define CFG_HOTSPOT_OPTIMIZATION_DTIM           1
-#if KERNEL_VERSION(5, 4, 0) <= LINUX_VERSION_CODE
-#define CFG_AUTO_CHANNEL_SEL_SUPPORT            0
-#else
 #define CFG_AUTO_CHANNEL_SEL_SUPPORT            1
-#endif
 
 #define CFG_SUPPORT_SOFTAP_WPA3	1
 
@@ -891,11 +886,7 @@
 
 #define CFG_SHOW_MACADDR_SOURCE			1
 
-#ifdef BUILD_QA_DBG
 #define CFG_SHOW_FULL_MACADDR     1
-#else
-#define CFG_SHOW_FULL_MACADDR     0
-#endif
 
 #ifndef CFG_SUPPORT_VO_ENTERPRISE
 #define CFG_SUPPORT_VO_ENTERPRISE               1
@@ -978,13 +969,7 @@
 
 #define CFG_FIX_2_TX_PORT			0
 
-#ifndef OPLUS_BUG_STABILITY
-//LiWei@CONNECTIVITY.WIFI.NETWORK.INTERNET.367834, 2020/09/21,
-//Modify for disable arp vo setting
-#define CFG_CHANGE_CRITICAL_PACKET_PRIORITY     1
-#else  /* OPLUS_BUG_STABILITY */
-#define CFG_CHANGE_CRITICAL_PACKET_PRIORITY     0
-#endif /* OPLUS_BUG_STABILITY */
+#define CFG_CHANGE_CRITICAL_PACKET_PRIORITY	1
 
 /*------------------------------------------------------------------------------
  * Flags of bus error tolerance
@@ -1328,13 +1313,7 @@
  * in mtk_cfg80211_get_station
  *------------------------------------------------------------------------------
  */
-#ifndef OPLUS_BUG_STABILITY
-//XuChuanye@CONNECTIVITY.WIFI.CONNECTION.CONNECT.2432753, 2019/10/16,
-//Modify for show max tx rate
-#define CFG_REPORT_MAX_TX_RATE	0
-#else  /* OPLUS_BUG_STABILITY */
 #define CFG_REPORT_MAX_TX_RATE	1
-#endif /* OPLUS_BUG_STABILITY */
 
 /*------------------------------------------------------------------------------
  * Link Quality Monitor
@@ -1425,20 +1404,14 @@
  * issues, eg. cross band switch.
  *------------------------------------------------------------------------------
  */
-#define CFG_SEND_DEAUTH_DURING_CHNL_SWITCH    0
+#define CFG_SEND_DEAUTH_DURING_CHNL_SWITCH    1
 
 /*------------------------------------------------------------------------------
  *Smart Gear Feature Configure
  *------------------------------------------------------------------------------
 */
 #ifndef CFG_SUPPORT_SMART_GEAR
-#ifdef OPLUS_BUG_STABILITY
-//Lei.Zhang@CONNECTIVITY.WIFI.HARDWARE.POWER.360963, 2020/09/21
-//enable smart gear by default
-#define CFG_SUPPORT_SMART_GEAR 1
-#else
 #define CFG_SUPPORT_SMART_GEAR 0
-#endif /* OPLUS_BUG_STABILITY */
 #endif
 
 /*------------------------------------------------------------------------------
@@ -1449,13 +1422,7 @@
  *          and unregister & free AIS netdev during module exit.
  *------------------------------------------------------------------------------
  */
-#ifdef OPLUS_BUG_STABILITY
-//Lei.Zhang@CONNECTIVITY.WIFI.HARDWARE.FTM.371618, 2020/09/24
-//unregister netdev for each wifi off
-#define CFG_SUPPORT_PERSIST_NETDEV 0
-#else
 #define CFG_SUPPORT_PERSIST_NETDEV 1
-#endif /* OPLUS_BUG_STABILITY */
 
 
 /*------------------------------------------------------------------------------

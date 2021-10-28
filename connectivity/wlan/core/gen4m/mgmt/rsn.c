@@ -1938,30 +1938,8 @@ void rsnParserCheckForRSNCCMPPSK(struct ADAPTER *prAdapter,
 		       prStaRec->rPmfCfg.fgSha256, prStaRec->ucBssIndex,
 		       prStaRec->rPmfCfg.fgApplyPmf);
 
-#if CFG_SUPPORT_SOFTAP_WPA3
-		if ((rRsnIe.au4AuthKeyMgtSuite[0] != RSN_AKM_SUITE_PSK)
-				&& prStaRec->ucAuthAlgNum == AUTH_ALGORITHM_NUM_OPEN_SYSTEM
-				&& prBssInfo->u4RsnSelectedAKMSuite == RSN_AKM_SUITE_SAE) {
-			DBGLOG(RSN, WARN, "RSN with invalid PMKID\n");
-			*pu2StatusCode = STATUS_INVALID_PMKID;
-			return;
-		}
-#endif
 		prBssInfo = GET_BSS_INFO_BY_INDEX(prAdapter,
 						  prStaRec->ucBssIndex);
-
-#if CFG_SUPPORT_SOFTAP_WPA3
-		if (prBssInfo->u4RsnSelectedAKMSuite == RSN_AKM_SUITE_SAE
-			&& prStaRec->ucAuthTranNum < AUTH_TRANSACTION_SEQ_2
-			&& prStaRec->ucAuthAlgNum
-				== AUTH_ALGORITHM_NUM_OPEN_SYSTEM) {
-			DBGLOG(RSN, WARN,
-				"RSN with invalid PMKID, ucAuthTranNum: %d\n",
-				prStaRec->ucAuthTranNum);
-			*pu2StatusCode = STATUS_INVALID_PMKID;
-			return;
-		}
-#endif
 
 		/* if PMF validation fail, return success as legacy association
 		 */
@@ -2633,18 +2611,11 @@ void rsnSaQueryRequest(IN struct ADAPTER *prAdapter, IN struct SW_RFB *prSwRfb)
 	uint16_t u2PayloadLen;
 	struct STA_RECORD *prStaRec;
 	struct ACTION_SA_QUERY_FRAME *prTxFrame;
-	uint8_t ucBssIndex;
-	if (!prAdapter)
-		return;
-
-	if (!prSwRfb)
-		return;
-
-	ucBssIndex = secGetBssIdxByRfb(prAdapter,
+	uint8_t ucBssIndex = secGetBssIdxByRfb(prAdapter,
 		prSwRfb);
 
 	prBssInfo = aisGetAisBssInfo(prAdapter, ucBssIndex);
-	if (!prBssInfo)
+	if (!prSwRfb)
 		return;
 
 	prRxFrame = (struct ACTION_SA_QUERY_FRAME *)
@@ -2685,11 +2656,8 @@ void rsnSaQueryRequest(IN struct ADAPTER *prAdapter, IN struct SW_RFB *prSwRfb)
 	prTxFrame = (struct ACTION_SA_QUERY_FRAME *)
 	    ((unsigned long)(prMsduInfo->prPacket) + MAC_TX_RESERVED_FIELD);
 
-	if (!prTxFrame)
-		return;
-
 	prTxFrame->u2FrameCtrl = MAC_FRAME_ACTION;
-	if (rsnCheckBipKeyInstalled(prAdapter, prStaRec))
+	if (rsnCheckBipKeyInstalled(prAdapter, prBssInfo->prStaRecOfAP))
 		prTxFrame->u2FrameCtrl |= MASK_FC_PROTECTED_FRAME;
 	COPY_MAC_ADDR(prTxFrame->aucDestAddr, prBssInfo->aucBSSID);
 	COPY_MAC_ADDR(prTxFrame->aucSrcAddr, prBssInfo->aucOwnMacAddr);
@@ -2706,8 +2674,8 @@ void rsnSaQueryRequest(IN struct ADAPTER *prAdapter, IN struct SW_RFB *prSwRfb)
 	/* 4 <3> Update information of MSDU_INFO_T */
 	TX_SET_MMPDU(prAdapter,
 		     prMsduInfo,
-		     prStaRec->ucBssIndex,
-		     prStaRec->ucIndex,
+		     prBssInfo->prStaRecOfAP->ucBssIndex,
+		     prBssInfo->prStaRecOfAP->ucIndex,
 		     WLAN_MAC_MGMT_HEADER_LEN,
 		     WLAN_MAC_MGMT_HEADER_LEN + u2PayloadLen, NULL,
 		     MSDU_RATE_MODE_AUTO);

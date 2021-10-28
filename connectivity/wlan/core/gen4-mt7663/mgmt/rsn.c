@@ -245,13 +245,10 @@ u_int8_t rsnParseRsnIE(IN struct ADAPTER *prAdapter,
 
 		/* Parse the RSN u2Capabilities field. */
 		if (u4RemainRsnIeLen < 2) {
-			/* Sync with wpa_supplicant,
-			* ignore truncated RSN Cap but view as valid RSNE
-			*/
 			DBGLOG(RSN, TRACE,
-			       "Ignore truncated RSN capabilities (IE len: %d)\n",
+			       "Fail to parse RSN IE in RSN capabilities (IE len: %d)\n",
 			       prInfoElem->ucLength);
-			break;
+			return FALSE;
 		}
 
 		WLAN_GET_FIELD_16(cp, &u2Cap);
@@ -268,13 +265,10 @@ u_int8_t rsnParseRsnIE(IN struct ADAPTER *prAdapter,
 		*/
 		/* Parse PMKID count field */
 		if (u4RemainRsnIeLen < 2) {
-			/* Sync with wpa_supplicant,
-			* ignore truncated PMKID count but view as valid RSNE
-			*/
 			DBGLOG(RSN, TRACE,
-			       "Ignore truncated PMKID count (IE len: %d)\n",
-			       prInfoElem->ucLength);
-			break;
+				"Fail to parse RSN IE in PMKID (IE len: %d)\n",
+				prInfoElem->ucLength);
+			return FALSE;
 		}
 
 		WLAN_GET_FIELD_16(cp, &u2DesiredPmkidCnt);
@@ -293,7 +287,7 @@ u_int8_t rsnParseRsnIE(IN struct ADAPTER *prAdapter,
 		i = (uint32_t) u2DesiredPmkidCnt * RSN_PMKID_LEN;
 		if (u4RemainRsnIeLen < (int32_t) i) {
 			DBGLOG(RSN, TRACE,
-				 "Fail to parse RSN IE in PMKID (IE len: %d)\n",
+				"Fail to parse RSN IE in pairwise cipher suite list (IE len: %d)\n",
 				prInfoElem->ucLength);
 			return FALSE;
 		}
@@ -1709,21 +1703,20 @@ void rsnGenerateRSNIE(IN struct ADAPTER *prAdapter,
 		/* Construct a RSN IE for association request frame. */
 		RSN_IE(pucBuffer)->ucElemId = ELEM_ID_RSN;
 #if CFG_SUPPORT_CFG80211_AUTH
-		if (prBssInfo->eNetworkType == NETWORK_TYPE_AIS) {
-			RSN_IE(pucBuffer)->ucLength =
-				prAdapter->prGlueInfo->rWpaInfo.ucRsneLen;
-		} else if ((prBssInfo->eCurrentOPMode ==
+		RSN_IE(pucBuffer)->ucLength =
+			prAdapter->prGlueInfo->rWpaInfo.ucRsneLen;
+		if (RSN_IE(pucBuffer)->ucLength < 2) {
+			if ((prBssInfo->eCurrentOPMode ==
 				OP_MODE_ACCESS_POINT) ||
 				(prBssInfo->eNetworkType == NETWORK_TYPE_P2P)) {
-			RSN_IE(pucBuffer)->ucLength =
+				RSN_IE(pucBuffer)->ucLength =
 							ELEM_ID_RSN_LEN_FIXED;
-		}
-
-		if (RSN_IE(pucBuffer)->ucLength < 2) {
-			DBGLOG(RSN, WARN,
-				"Desired RSN IE from upper is too short (length=%d)\n",
-				RSN_IE(pucBuffer)->ucLength);
-			return;
+			} else {
+				DBGLOG(RSN, WARN,
+					"Desired RSN IE from upper is too short (length=%d)\n",
+					RSN_IE(pucBuffer)->ucLength);
+				return;
+			}
 		}
 #else
 		RSN_IE(pucBuffer)->ucLength = ELEM_ID_RSN_LEN_FIXED;

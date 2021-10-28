@@ -1340,8 +1340,6 @@ void mtk_p2p_wext_set_Multicastlist(P_GLUE_INFO_T prGlueInfo)
 		netif_addr_lock_bh(prDev);
 
 		netdev_for_each_mc_addr(ha, prDev) {
-			if (!ha)
-				break;
 			if ((i < MAX_NUM_GROUP_ADDR) && (ha != NULL)) {
 				COPY_MAC_ADDR(&(prGlueInfo->prP2PInfo->aucMCAddrList[i]), ha->addr);
 				i++;
@@ -2670,7 +2668,6 @@ mtk_p2p_wext_discovery_results(IN struct net_device *prDev,
 		/* device capability */
 		if (1) {
 			UINT_8 data[40];
-			UINT_32 u4Offset = 0;
 
 			iwe.cmd = IWEVCUSTOM;
 			iwe.u.data.flags = 0;
@@ -2678,13 +2675,12 @@ mtk_p2p_wext_discovery_results(IN struct net_device *prDev,
 			if (iwe.u.data.length > 40)
 				iwe.u.data.length = 40;
 
-			u4Offset = snprintf(data, iwe.u.data.length, "p2p_cap=%02x%02x%02x%02x%c",
+			snprintf(data, iwe.u.data.length, "p2p_cap=%02x%02x%02x%02x%c",
 				 prTargetResult->ucDeviceCapabilityBitmap, prTargetResult->ucGroupCapabilityBitmap,
 				 (UINT_8) prTargetResult->u2ConfigMethod,
 				 (UINT_8) (prTargetResult->u2ConfigMethod >> 8), '\0');
 			current_ev =
 			    iwe_stream_add_point(info, current_ev, extra + IW_SCAN_MAX_DATA, &iwe, (char *)data);
-			DBGLOG(INIT, LOUD, "u4Offset = [%u]\n", u4Offset);
 
 			/* printk("%s\n", data); */
 			kalMemZero(data, 40);
@@ -3088,15 +3084,12 @@ BOOLEAN kalP2PIndicateFound(IN P_GLUE_INFO_T prGlueInfo)
 {
 	union iwreq_data evt;
 	UINT_8 aucBuffer[IW_CUSTOM_MAX];
-	UINT_32 u4Offset = 0;
 
 	ASSERT(prGlueInfo);
 
 	memset(&evt, 0, sizeof(evt));
 
-	u4Offset =
-		snprintf(aucBuffer, IW_CUSTOM_MAX - 1, "P2P_DVC_FND");
-	DBGLOG(INIT, LOUD, "u4Offset = [%u]\n", u4Offset);
+	snprintf(aucBuffer, IW_CUSTOM_MAX - 1, "P2P_DVC_FND");
 	evt.data.length = strlen(aucBuffer);
 
 	/* indicate IWEVP2PDVCFND event */

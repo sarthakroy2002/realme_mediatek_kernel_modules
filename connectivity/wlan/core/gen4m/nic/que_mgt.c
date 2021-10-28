@@ -587,7 +587,8 @@ void qmActivateStaRec(IN struct ADAPTER *prAdapter,
 #endif
 
 #if CFG_MTK_MCIF_WIFI_SUPPORT
-	mddpNotifyDrvTxd(prAdapter, prStaRec, TRUE);
+	if (prAdapter->fgMddpActivated)
+		mddpNotifyDrvTxd(prAdapter, prStaRec, TRUE);
 #endif
 
 	DBGLOG(QM, INFO, "QM: +STA[%d]\n", prStaRec->ucIndex);
@@ -646,7 +647,8 @@ void qmDeactivateStaRec(IN struct ADAPTER *prAdapter,
 	qmUpdateStaRec(prAdapter, prStaRec);
 
 #if CFG_MTK_MCIF_WIFI_SUPPORT
-	mddpNotifyDrvTxd(prAdapter, prStaRec, FALSE);
+	if (prAdapter->fgMddpActivated)
+		mddpNotifyDrvTxd(prAdapter, prStaRec, FALSE);
 #endif
 
 	DBGLOG(QM, INFO, "QM: -STA[%u]\n", prStaRec->ucIndex);
@@ -8165,30 +8167,11 @@ u_int8_t qmHandleRxReplay(struct ADAPTER *prAdapter,
 #endif
 
 u_int8_t
-qmIsIPLayerPacket(uint8_t *pucPkt)
-{
-	uint16_t u2EtherType =
-		(pucPkt[ETH_TYPE_LEN_OFFSET] << 8)
-			| (pucPkt[ETH_TYPE_LEN_OFFSET + 1]);
-
-	if (u2EtherType == ETH_P_IPV4 || u2EtherType == ETH_P_IPV6) {
-		uint8_t *pucEthBody = &pucPkt[ETH_HLEN];
-		uint8_t ucIpProto =
-			(u2EtherType == ETH_P_IPV4 ?
-				pucEthBody[IP_PROTO_HLEN] :
-				pucEthBody[IPV6_HDR_PROTOCOL_OFFSET]);
-
-		if (ucIpProto == IP_PRO_UDP || ucIpProto == IP_PRO_TCP)
-			return TRUE;
-	}
-
-	return FALSE;
-}
-
-u_int8_t
 qmIsNoDropPacket(IN struct ADAPTER *prAdapter, IN struct SW_RFB *prSwRfb)
 {
 	uint8_t *pucData = (uint8_t *) prSwRfb->pvHeader;
+	uint16_t u2Etype = (pucData[ETH_TYPE_LEN_OFFSET] << 8)
+		| (pucData[ETH_TYPE_LEN_OFFSET + 1]);
 	uint8_t ucBssIndex
 		= secGetBssIdxByWlanIdx(prAdapter, prSwRfb->ucWlanIdx);
 	u_int8_t fgCheckDrop = FALSE;
@@ -8227,8 +8210,13 @@ qmIsNoDropPacket(IN struct ADAPTER *prAdapter, IN struct SW_RFB *prSwRfb)
 	}
 #endif
 
-	if (fgCheckDrop && qmIsIPLayerPacket(pucData))
-		return TRUE;
+	if (fgCheckDrop && u2Etype == ETH_P_IP) {
+		uint8_t *pucEthBody = &pucData[ETH_HLEN];
+		uint8_t ucIpProto = pucEthBody[IP_PROTO_HLEN];
+
+		if (ucIpProto == IP_PRO_UDP || ucIpProto == IP_PRO_TCP)
+			return TRUE;
+	}
 
 	/* For some special packet, like DNS, DHCP,
 	 * do not drop evan fall behind.

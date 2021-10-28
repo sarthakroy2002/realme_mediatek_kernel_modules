@@ -4805,20 +4805,6 @@ int priv_support_driver_cmd(IN struct net_device *prNetDev, IN OUT struct ifreq 
 		DBGLOG(REQ, INFO, "%s: command %s failed; Written is %d\n",
 			__func__, pcCommand, i4BytesWritten);
 		ret = -EFAULT;
-	} else { /* (i4BytesWritten >= 0) */
-		priv_cmd->used_len = i4BytesWritten;
-		if ((i4BytesWritten == 0) && (priv_cmd->total_len > 0))
-			pcCommand[0] = '\0';
-		if (i4BytesWritten >= priv_cmd->total_len)
-			i4BytesWritten = priv_cmd->total_len;
-		else
-			i4BytesWritten++;
-		priv_cmd->used_len = i4BytesWritten;
-		if (copy_to_user(prReq->ifr_data, priv_cmd,
-					sizeof(struct priv_driver_cmd_s))) {
-			ret = -EFAULT;
-			DBGLOG(REQ, INFO, "copy fail");
-		}
 	}
 
 exit:

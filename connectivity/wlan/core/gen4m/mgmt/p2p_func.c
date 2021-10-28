@@ -410,7 +410,7 @@ void p2pFuncGCJoin(IN struct ADAPTER *prAdapter,
 		}
 
 		/* 2 <1> We are goin to connect to this BSS */
-		prBssDesc->fgIsConnecting |= BIT(prP2pBssInfo->ucBssIndex);
+		prBssDesc->fgIsConnecting = TRUE;
 
 		/* 2 <2> Setup corresponding STA_RECORD_T */
 		prStaRec = bssCreateStaRecFromBssDesc(prAdapter,
@@ -621,8 +621,8 @@ p2pFuncUpdateBssInfoForJOIN(IN struct ADAPTER *prAdapter,
 
 		/* 3 <4> Update BSS_INFO_T from BSS_DESC_T */
 
-		prBssDesc->fgIsConnecting &= ~BIT(prP2pBssInfo->ucBssIndex);
-		prBssDesc->fgIsConnected |= BIT(prP2pBssInfo->ucBssIndex);
+		prBssDesc->fgIsConnecting = FALSE;
+		prBssDesc->fgIsConnected = TRUE;
 
 		/* 4 <4.1> Setup MIB for current BSS */
 		prP2pBssInfo->u2BeaconInterval = prBssDesc->u2BeaconInterval;
@@ -2928,8 +2928,7 @@ p2pFuncDisconnect(IN struct ADAPTER *prAdapter,
 			prP2pRoleFsmInfo->rJoinInfo.prTargetBssDesc = NULL;
 
 			scanRemoveConnFlagOfBssDescByBssid(prAdapter,
-				prP2pBssInfo->aucBSSID,
-				prP2pBssInfo->ucBssIndex);
+				prP2pBssInfo->aucBSSID);
 		}
 
 		DBGLOG(P2P, INFO,
@@ -3746,10 +3745,6 @@ p2pFuncParseBeaconContent(IN struct ADAPTER *prAdapter,
 				(uint8_t) prP2pBssInfo->u4PrivateData);
 
 		prP2pBssInfo->ucCountryIELen = 0;
-
-#if (CFG_SUPPORT_802_11AX == 1)
-		prP2pBssInfo->ucPhyTypeSet &= ~PHY_TYPE_SET_802_11AX;
-#endif
 
 		IE_FOR_EACH(pucIE, u4IELen, u2Offset) {
 			switch (IE_ID(pucIE)) {
@@ -6370,27 +6365,13 @@ void p2pFuncSwitchSapChannel(
 		rRfChnlInfo.ucChnlBw =
 			rlmGetBssOpBwByVhtAndHtOpInfo(prP2pBssInfo);
 
-        if (rRfChnlInfo.ucChnlBw >
-            rlmDomainGetChannelBw(ucStaChannelNum)) {
-            DBGLOG(P2P, INFO,
-                "[SCC] Adjust bw from %d to %d\n",
-                rRfChnlInfo.ucChnlBw,
-                rlmDomainGetChannelBw(ucStaChannelNum));
-            rRfChnlInfo.ucChnlBw =
-                rlmDomainGetChannelBw(ucStaChannelNum);
-        }
-
 		DBGLOG(P2P, INFO,
 			"[SCC] StaCH(%d), SapCH(%d)(dfs: %u)\n",
 			ucStaChannelNum, ucSapChannelNum, fgIsSapDfs);
 
-		if (wlanGetSupportNss(prAdapter, prP2pBssInfo->ucBssIndex) > 1)
-			cnmSapChannelSwitchReq(prAdapter,
-				&rRfChnlInfo,
-				prP2pBssInfo->u4PrivateData);
-		else
-			DBGLOG(P2P, INFO,
-				"Do not change SAP channel if 1 NSS\n");
+		cnmSapChannelSwitchReq(prAdapter,
+			&rRfChnlInfo,
+			prP2pBssInfo->u4PrivateData);
 
 	}
 
@@ -6818,19 +6799,14 @@ void p2pFunProcessAcsReport(IN struct ADAPTER *prAdapter,
 		if (!fgIsMaskValid) {
 			DBGLOG(P2P, WARN,
 				"All mask invalid, mark all as valid\n");
-			prAcsReqInfo->u4LteSafeChnMask_2G = BITS(1, 14);
+			prAcsReqInfo->u4LteSafeChnMask_2G = BITS(1, 11);
 		}
-#if CFG_TC1_FEATURE
-		/* Restrict 2.4G band channel selection range
-		 * to 1/6/11 per customer's request
-		 */
-		prAcsReqInfo->u4LteSafeChnMask_2G &= 0x0842;
-#elif CFG_TC10_FEATURE
+
 		/* Restrict 2.4G band channel selection range
 		 * to 1~11 per customer's request
 		 */
 		prAcsReqInfo->u4LteSafeChnMask_2G &= 0x0FFE;
-#endif
+
 	} else if (prLteSafeChnInfo && (eBand == BAND_5G)) {
 		/* Add support for 5G FW mask */
 		struct LTE_SAFE_CHN_INFO *prLteSafeChnList =

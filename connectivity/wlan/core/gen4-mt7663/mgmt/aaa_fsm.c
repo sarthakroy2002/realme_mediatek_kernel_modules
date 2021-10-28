@@ -480,14 +480,13 @@ bow_proc:
 
 		/* NOTE: Ignore the return status for AAA */
 		/* 4 <4> Reply  Auth */
-		if (WLAN_STATUS_SUCCESS !=
-			authSendAuthFrame(prAdapter,
-				prStaRec,
-				prBssInfo->ucBssIndex,
-				prSwRfb,
-				AUTH_TRANSACTION_SEQ_2,
-				u2StatusCode))
-			DBGLOG(AAA, WARN, "authSendAuthFrame fail!\n");
+		authSendAuthFrame(prAdapter,
+			prStaRec,
+			prBssInfo->ucBssIndex,
+			prSwRfb,
+			AUTH_TRANSACTION_SEQ_2,
+			u2StatusCode);
+
 
 		/*sta_rec might be removed
 		 * when client list full, skip timer setting

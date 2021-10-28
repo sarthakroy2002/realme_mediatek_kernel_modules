@@ -184,8 +184,7 @@ static const struct wiphy_vendor_command mtk_p2p_vendor_ops[] = {
 		},
 		.flags = WIPHY_VENDOR_CMD_NEED_WDEV
 				| WIPHY_VENDOR_CMD_NEED_NETDEV,
-		.doit = mtk_cfg80211_vendor_get_channel_list,
-		VENDOR_OPS_SET_POLICY(VENDOR_CMD_RAW_DATA)
+		.doit = mtk_cfg80211_vendor_get_channel_list
 	},
 	{
 		{
@@ -194,8 +193,7 @@ static const struct wiphy_vendor_command mtk_p2p_vendor_ops[] = {
 		},
 		.flags = WIPHY_VENDOR_CMD_NEED_WDEV
 				| WIPHY_VENDOR_CMD_NEED_NETDEV,
-		.doit = mtk_cfg80211_vendor_set_country_code,
-		VENDOR_OPS_SET_POLICY(VENDOR_CMD_RAW_DATA)
+		.doit = mtk_cfg80211_vendor_set_country_code
 	},
 #if CFG_SUPPORT_P2P_PREFERRED_FREQ_LIST
 	/* P2P get preferred freq list */
@@ -207,8 +205,7 @@ static const struct wiphy_vendor_command mtk_p2p_vendor_ops[] = {
 		.flags = WIPHY_VENDOR_CMD_NEED_WDEV
 		| WIPHY_VENDOR_CMD_NEED_NETDEV
 		| WIPHY_VENDOR_CMD_NEED_RUNNING,
-		.doit = mtk_cfg80211_vendor_get_preferred_freq_list,
-		VENDOR_OPS_SET_POLICY(VENDOR_CMD_RAW_DATA)
+		.doit = mtk_cfg80211_vendor_get_preferred_freq_list
 	},
 #endif /* CFG_SUPPORT_P2P_PREFERRED_FREQ_LIST */
 };

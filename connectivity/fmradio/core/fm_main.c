@@ -822,6 +822,24 @@ signed int fm_desense_check(struct fm *pfm, unsigned short freq, signed int rssi
 	return ret;
 }
 
+signed int fm_set_desense_list(struct fm * pfm, signed int op, unsigned short freq)
+{
+    signed int ret = 0;
+
+    if (pfm == NULL) {
+        WCN_DBG(FM_ERR | MAIN, "%s,invalid pointer\n", __func__);
+        return -FM_EPARA;
+    }
+    if (fm_low_ops.bi.set_desense_list) {
+        if (FM_LOCK(fm_ops_lock))
+            return -FM_ELOCK;
+        ret = fm_low_ops.bi.set_desense_list(op, freq);
+        FM_UNLOCK(fm_ops_lock);
+    }
+
+    return ret;
+}
+
 signed int fm_dump_reg(void)
 {
 	signed int ret = 0;

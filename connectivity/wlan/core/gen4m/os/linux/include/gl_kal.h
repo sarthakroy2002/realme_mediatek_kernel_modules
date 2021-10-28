@@ -105,10 +105,6 @@ extern int g_u4HaltFlag;
 extern int g_u4WlanInitFlag;
 
 extern struct delayed_work sched_workq;
-#if CFG_MODIFY_TX_POWER_BY_BAT_VOLT
-extern unsigned int wlan_bat_volt;
-extern bool fgIsTxPowerDecreased;
-#endif
 
 /*******************************************************************************
  *                              C O N S T A N T S
@@ -140,8 +136,7 @@ extern bool fgIsTxPowerDecreased;
 	(GLUE_FLAG_HALT | GLUE_FLAG_INT | GLUE_FLAG_HIF_TX | \
 	GLUE_FLAG_HIF_TX_CMD | GLUE_FLAG_HIF_FW_OWN | \
 	GLUE_FLAG_HIF_PRT_HIF_DBG_INFO | \
-	GLUE_FLAG_UPDATE_WMM_QUOTA | \
-	GLUE_FLAG_NOTIFY_MD_CRASH)
+	GLUE_FLAG_UPDATE_WMM_QUOTA)
 
 #define GLUE_FLAG_RX_PROCESS (GLUE_FLAG_HALT | GLUE_FLAG_RX_TO_OS)
 #else
@@ -267,9 +262,6 @@ enum ENUM_SPIN_LOCK_CATEGORY_E {
 
 	SPIN_LOCK_EHPI_BUS,	/* only for EHPI */
 	SPIN_LOCK_NET_DEV,
-
-	SPIN_LOCK_BSSLIST_FW,
-	SPIN_LOCK_BSSLIST_CFG,
 	SPIN_LOCK_NUM
 };
 
@@ -1502,8 +1494,6 @@ void kalSetIntEvent(struct GLUE_INFO *pr);
 
 void kalSetWmmUpdateEvent(struct GLUE_INFO *pr);
 
-void kalSetMdCrashEvent(struct GLUE_INFO *pr);
-
 void kalSetHifDbgEvent(struct GLUE_INFO *pr);
 
 #if CFG_SUPPORT_MULTITHREAD
@@ -1818,12 +1808,6 @@ void kalRemoveBss(struct GLUE_INFO *prGlueInfo,
 #if CFG_SUPPORT_WPA3
 int kalExternalAuthRequest(IN struct ADAPTER *prAdapter,
 			   IN uint8_t uBssIndex);
-#endif
-#if CFG_MODIFY_TX_POWER_BY_BAT_VOLT
-int32_t kalBatNotifierReg(IN struct GLUE_INFO *prGlueInfo);
-void kalEnableTxPwrBackoffByBattVolt(struct ADAPTER *prAdapter, bool ucEnable);
-void kalSetTxPwrBackoffByBattVolt(struct ADAPTER *prAdapter, bool ucEnable);
-void kalBatNotifierUnReg(void);
 #endif
 
 int kalWlanUeventInit(void);

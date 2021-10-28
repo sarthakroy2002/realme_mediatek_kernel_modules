@@ -145,18 +145,19 @@ static uint8_t *soc3_0_apucCr4FwName[] = {
 *                            P U B L I C   D A T A
 ********************************************************************************
 */
-#if (CFG_SUPPORT_PRE_ON_PHY_ACTION == 1)
-
 #if CFG_MTK_ANDROID_EMI
+	phys_addr_t gConEmiPhyBase;
+	unsigned long long gConEmiSize;
+
+#if (CFG_SUPPORT_PRE_ON_PHY_ACTION == 1)
 u_int8_t *gEmiCalResult;
 u_int32_t gEmiCalSize;
 u_int32_t gEmiCalOffset;
 bool gEmiCalUseEmiData;
-#endif
-
 struct wireless_dev *grWdev;
-
 #endif /* (CFG_SUPPORT_PRE_ON_PHY_ACTION == 1) */
+
+#endif
 
 #if (CFG_SUPPORT_VCODE_VDFS == 1)
 static struct pm_qos_request wifi_req;
@@ -2588,7 +2589,7 @@ void wlanCoAntVFE28Dis(void)
 
 void wlanCoAntWiFi(void)
 {
-	uint32_t u4GPIO10 = 0x0;
+	u_int32 u4GPIO10 = 0x0;
 
 	wf_ioremap_read(0x100053a0, &u4GPIO10);
 	u4GPIO10 |= 0x20000;
@@ -2598,7 +2599,7 @@ void wlanCoAntWiFi(void)
 
 void wlanCoAntMD(void)
 {
-	uint32_t u4GPIO10 = 0x0;
+	u_int32 u4GPIO10 = 0x0;
 
 	wf_ioremap_read(0x100053a0, &u4GPIO10);
 	u4GPIO10 |= 0x10000;
@@ -3908,20 +3909,22 @@ uint32_t soc3_0_wlanAccessCalibrationEMI(
 #if CFG_MTK_ANDROID_EMI
 	uint8_t __iomem *pucEmiBaseAddr = NULL;
 
-	if (!gConEmiPhyBaseFinal) {
+	conninfra_get_phy_addr(
+		(unsigned int *)&gConEmiPhyBase,
+		(unsigned int *)&gConEmiSize);
+
+	if (!gConEmiPhyBase) {
 		DBGLOG(INIT, ERROR,
-		       "gConEmiPhyBaseFinal invalid\n");
+		       "gConEmiPhyBase invalid\n");
 		return u4Status;
 	}
 
-	request_mem_region(gConEmiPhyBaseFinal, gConEmiSizeFinal, "WIFI-EMI");
-	kalSetEmiMpuProtection(gConEmiPhyBaseFinal, false);
-	pucEmiBaseAddr =
-		ioremap_nocache(gConEmiPhyBaseFinal, gConEmiSizeFinal);
+	request_mem_region(gConEmiPhyBase, gConEmiSize, "WIFI-EMI");
+	kalSetEmiMpuProtection(gConEmiPhyBase, false);
+	pucEmiBaseAddr = ioremap_nocache(gConEmiPhyBase, gConEmiSize);
 	DBGLOG(INIT, INFO,
-	       "backupEMI(%d),gConEmiPhyBaseFinal(0x%x),gConEmiSizeFinal(0x%X),pucEmiBaseAddr(0x%x)\n",
-	       backupEMI, gConEmiPhyBaseFinal, gConEmiSizeFinal,
-	       pucEmiBaseAddr);
+	       "backupEMI(%d),gConEmiPhyBase(0x%x),gConEmiSize(0x%X),pucEmiBaseAddr(0x%x)\n",
+	       backupEMI, gConEmiPhyBase, gConEmiSize, pucEmiBaseAddr);
 
 	do {
 		if (!pucEmiBaseAddr) {
@@ -3981,9 +3984,9 @@ uint32_t soc3_0_wlanAccessCalibrationEMI(
 		u4Status = WLAN_STATUS_SUCCESS;
 	} while (FALSE);
 
-	kalSetEmiMpuProtection(gConEmiPhyBaseFinal, true);
+	kalSetEmiMpuProtection(gConEmiPhyBase, true);
 	iounmap(pucEmiBaseAddr);
-	release_mem_region(gConEmiPhyBaseFinal, gConEmiSizeFinal);
+	release_mem_region(gConEmiPhyBase, gConEmiSize);
 #endif /* CFG_MTK_ANDROID_EMI */
 	return u4Status;
 }

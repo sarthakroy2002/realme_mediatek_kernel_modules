@@ -5488,6 +5488,7 @@ void nicEventWakeUpReason(IN struct ADAPTER *prAdapter,
 	struct wiphy *wiphy;
 #endif
 
+	DBGLOG(NIC, INFO, "nicEventWakeUpReason\n");
 	prGlueInfo = prAdapter->prGlueInfo;
 
 	/* Driver receives EVENT_ID_WOW_WAKEUP_REASON after fw wake up host
@@ -5513,16 +5514,10 @@ void nicEventWakeUpReason(IN struct ADAPTER *prAdapter,
 		prGlueInfo->prAdapter->rWowCtrl.ucReason);
 
 #if CFG_SUPPORT_MAGIC_PKT_VENDOR_EVENT
-	/* for yocto branch, wifi needs to upload wake up event to
-	 * upper layer to hold wake lock to prevent system going to
-	 * suspend again, the reason is not only magic packet,
-	 * but also UDP/TCP and beacon timeout event and so on,
-	 * those reasons also need to be upload to upper layer
-	 */
-	if (prWakeUpReason->reason != ENUM_PF_CMD_TYPE_UNDEFINED) {
-		wiphy = priv_to_wiphy(prGlueInfo);
+	wiphy = priv_to_wiphy(prGlueInfo);
+	if (prWakeUpReason->reason == ENUM_PF_CMD_TYPE_MAGIC) {
 		DBGLOG(RX, INFO,
-			"upload EVENT ID[0x%02X] to upper layer!!\n",
+			"EVENT ID[0x%02X] Find Magic Packet!!\n",
 			prEvent->ucEID);
 		mtk_cfg80211_vendor_event_wowlan_magic_pkt(wiphy,
 				prGlueInfo->prDevHandler->ieee80211_ptr, 0);
